@@ -9,19 +9,28 @@
 import Foundation
 import Nuke
 #if SWIFT_PACKAGE
-import NukeWebPPluginC
+@preconcurrency import NukeWebPPluginC
 #endif
 
-public class WebPImageDecoder: Nuke.ImageDecoding {
+public enum WebPImageDecoderError: Error {
+    case nonWebPImage
+    case invalidWebPImage
+}
 
-    private lazy var decoder: WebPDataDecoder = WebPDataDecoder()
+public final class WebPImageDecoder: Nuke.ImageDecoding {
+    
+    private let decoder: WebPDataDecoder = WebPDataDecoder()
 
     public init() {
     }
 
-    public func decode(_ data: Data) -> ImageContainer? {
-        guard data.isWebPFormat else { return nil }
-        guard let image = _decode(data) else { return nil }
+    public func decode(_ data: Data) throws -> Nuke.ImageContainer {
+        guard data.isWebPFormat else {
+            throw WebPImageDecoderError.nonWebPImage
+        }
+        guard let image = _decode(data) else {
+            throw WebPImageDecoderError.invalidWebPImage
+        }
         return ImageContainer(image: image)
     }
 
